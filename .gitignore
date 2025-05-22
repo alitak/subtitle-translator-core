@@ -1,0 +1,15 @@
+.venv
+.env
+__pycache__
+*.pyc
+
+# IDE
+.idea
+.vscode
+
+# Subtitles
+*.srt
+*.vtt
+
+# Logs
+*.log
