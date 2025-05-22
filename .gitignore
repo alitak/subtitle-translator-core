@@ -15,6 +15,6 @@ __pycache__
 *.log
 
 # Database
-subtitles.db
+*.db
 
 *.egg-info
