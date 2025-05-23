@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 import os
 from app.db.base import get_db
@@ -6,10 +6,10 @@ from app.schemas.resources.video_resource import VideoList, VideoResource
 from app.schemas.requests.video_request import VideoCreateRequest
 from app.models.video_model import VideoModel, VideoStatus
 from app.models.subtitle_model import SubtitleModel
-from app.utils import dd_http
+from app.services.video_service import VideoService
+from app.core.settings import settings
 
 router = APIRouter()
-# task_manager = BackgroundTaskManager()
 
 
 @router.get("/", response_model=VideoList)
@@ -22,6 +22,12 @@ def index(
     total = query.count()
     videos = query.order_by(VideoModel.created_at.desc()).offset(skip).limit(limit).all()
 
+    # Update subtitle paths to use the correct URL
+    for video in videos:
+        for subtitle in video.subtitles:
+            if subtitle.path:
+                subtitle.path = f"{settings.BASE_URL}/storage/subtitles/{video.id}/{subtitle.path}"
+
     return {
         "items": videos,
         "total": total,
@@ -33,6 +39,7 @@ def index(
 @router.post("/", response_model=VideoResource, status_code=status.HTTP_201_CREATED)
 def store(
     video: VideoCreateRequest,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
     video_obj = VideoModel(
@@ -50,13 +57,11 @@ def store(
     db.commit()
     db.refresh(video_obj)
     
-    # # Start background task for downloading subtitles
-    # # task_id = f"download_subtitles_{db_video.id}"
-    # # task_manager.create_task(
-    # #     task_id=task_id,
-    # #     task_func=service.download_subtitles,
-    # #     video_id=str(db_video.id)
-    # # )
+    # Start background task for downloading subtitles
+    background_tasks.add_task(
+        VideoService(db).download_subtitles,
+        video=video_obj
+    )
     
     return video_obj
 

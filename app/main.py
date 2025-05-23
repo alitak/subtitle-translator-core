@@ -1,10 +1,9 @@
-from fastapi import FastAPI # , Depends
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from app.utils import register_debug_exception_handler
-# from sqlalchemy.orm import Session
-# import os
-# from pathlib import Path
 from .api.v1.endpoints import videos
+from app.core.settings import settings
 
 app = FastAPI(
     title="Subtitle Translator API",
@@ -12,6 +11,8 @@ app = FastAPI(
     version="1.0.0"
 )
 register_debug_exception_handler(app)
+
+app.mount("/storage", StaticFiles(directory=settings.STORAGE_DIR), name="storage")
 
 @app.get("/")
 def read_root():
@@ -36,13 +37,4 @@ app.include_router(
     tags=["videos"]
 )
 
-    # "uvicorn==0.27.0",
-    # "python-multipart==0.0.9",
-    # "pydantic==2.6.1",
-    # "pydantic-settings==2.1.0",
-    # "python-jose[cryptography]==3.3.0",
-    # "passlib[bcrypt]==1.7.4",
-    # "yt-dlp==2024.3.10",
     # "openai==1.12.0",
-    # "python-slugify==8.0.1",
-    # "python-magic==0.4.27",
