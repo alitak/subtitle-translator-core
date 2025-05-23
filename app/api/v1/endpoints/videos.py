@@ -7,7 +7,9 @@ from app.schemas.requests.video_request import VideoCreateRequest
 from app.models.video_model import VideoModel, VideoStatus
 from app.models.subtitle_model import SubtitleModel
 from app.services.video_service import VideoService
+from app.services.translation_service import TranslationService
 from app.core.settings import settings
+from app.utils import dd_http
 
 router = APIRouter()
 
@@ -46,8 +48,8 @@ def store(
         url=str(video.url),
         status=VideoStatus.PENDING
     )
-    
     subtitles = []
+    video.languages.append("hu")
     for lang in video.languages:
         subtitles.append(SubtitleModel(language=lang))
 
@@ -57,10 +59,10 @@ def store(
     db.commit()
     db.refresh(video_obj)
     
-    # Start background task for downloading subtitles
     background_tasks.add_task(
         VideoService(db).download_subtitles,
-        video=video_obj
+        video=video_obj,
+        background_tasks=background_tasks
     )
     
     return video_obj
@@ -100,75 +102,39 @@ def destroy(
     return None
 
 
-# @router.post("/{video_id}/subtitles", status_code=status.HTTP_202_ACCEPTED)
-# def translate_subtitles(
-#     video_id: str,
-#     subtitle: SubtitleCreate,
-#     db: Session = Depends(get_db)
-# ):
-#     """Start translation of subtitles to the specified language"""
-#     service = VideoService(db)
-#     video = service.get_video(video_id)
-#     if not video:
-#         raise HTTPException(status_code=404, detail="Video not found")
+@router.post("/{video_id}/subtitles/{language}", status_code=status.HTTP_202_ACCEPTED)
+def translate_subtitles(
+    video_id: str,
+    language: str,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    video = db.query(VideoModel).filter(VideoModel.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
     
-#     # Find source subtitle (prefer English as source)
-#     source_sub = next((s for s in video.subtitles if s.language == 'en'), None)
-#     if not source_sub:
-#         source_sub = next((s for s in video.subtitles), None)
-#         if not source_sub:
-#             raise HTTPException(status_code=400, detail="No source subtitles available for translation")
+    source_sub = next((s for s in video.subtitles if s.language == "hu"), None)
+    if not source_sub:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"No source subtitles available in language 'hu' for translation"
+        )
     
-#     # Check if translation already exists
-#     existing_translation = next(
-#         (s for s in video.subtitles if s.language == subtitle.language),
-#         None
-#     )
-    
-#     if existing_translation:
-#         return {"status": "already_exists", "subtitle_id": existing_translation.id}
-    
-#     # Start background translation task
-#     task_id = f"translate_{video_id}_{subtitle.language}"
-#     task_manager.create_task(
-#         task_id=task_id,
-#         task_func=translate_subtitle_task,
-#         video_id=video_id,
-#         source_path=source_sub.path,
-#         target_lang=subtitle.language,
-#         db=db
-#     )
-    
-#     return {"status": "translation_started", "task_id": task_id}
+    subtitle = next((s for s in video.subtitles if s.language == language), None)
 
-# def translate_subtitle_task(video_id: str, source_path: str, target_lang: str, db: Session):
-#     """Background task to handle subtitle translation"""
-#     from ...models.video import Subtitle
-#     from ...services.video_service import VideoService
+    if not subtitle:
+        subtitle = SubtitleModel(language=language)
+        video.subtitles.append(subtitle)
+        db.add(video)
+        db.commit()
     
-#     service = VideoService(db)
-#     translation_service = TranslationService()
+    background_tasks.add_task(
+        TranslationService().translate_subtitle,
+        subtitle=subtitle,
+        db=db,
+        hu_subtitle_path=source_sub.path
+    )
     
-#     try:
-#         # Translate the subtitle
-#         target_path = translation_service.translate_subtitle(source_path, target_lang)
-        
-#         # Create subtitle record
-#         subtitle = Subtitle(
-#             video_id=video_id,
-#             language=target_lang,
-#             status="translated",
-#             path=target_path
-#         )
-#         db.add(subtitle)
-#         db.commit()
-        
-#         # Update video status if needed
-#         video = service.get_video(video_id)
-#         if video and video.status == "downloaded":
-#             video.status = "translated"
-#             db.commit()
-            
-#     except Exception as e:
-#         print(f"Translation task failed: {e}")
-#         raise
+    return {"status": "translation_started"}
+
+
