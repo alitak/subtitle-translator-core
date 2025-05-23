@@ -1,6 +1,7 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, DateTime, func
+from sqlalchemy import Column, DateTime, func, String
 import uuid
+
 
 Base = declarative_base()
 

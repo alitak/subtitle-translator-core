@@ -2,15 +2,15 @@ from sqlalchemy import Column, String, Enum, ForeignKey, Text
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 import enum
-from .video import Video
 
 
 class SubtitleStatus(str, enum.Enum):
     PENDING = "pending"
+    TRANSLATING = "translating"
     TRANSLATED = "translated"
 
 
-class Subtitle(BaseModel):
+class SubtitleModel(BaseModel):
     __tablename__ = "subtitles"
 
     video_id = Column(String(36), ForeignKey("videos.id", ondelete="CASCADE"), nullable=False)
@@ -18,4 +18,4 @@ class Subtitle(BaseModel):
     status = Column(Enum(SubtitleStatus), default=SubtitleStatus.PENDING, nullable=False)
     path = Column(Text, nullable=False)
 
-    video = relationship("Video", back_populates="subtitles")
+    video = relationship("VideoModel", back_populates="subtitles")
