@@ -52,12 +52,13 @@ jobs:
             .venv/bin/pip install --upgrade pip
             .venv/bin/pip install .
 
+            echo "--- running alembic migrations ---"
+            .venv/bin/alembic upgrade head
+
             echo "--- writing .env ---"
-            cat <<EOL > .env
-BASE_URL=${{ vars.BASE_URL }}
-DATABASE_URL=${{ vars.DATABASE_URL }}
-OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-EOL
+            echo "BASE_URL=${{ vars.BASE_URL }}" > .env
+            echo "DATABASE_URL=${{ vars.DATABASE_URL }}" >> .env
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
 
             # echo "--- restarting fastapi service ---"
             # sudo systemctl restart subtitle-translator.service
