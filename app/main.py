@@ -19,15 +19,20 @@ def read_root():
     return {"status": "ok"}
     
 
+# List of allowed origins (frontend URLs)
+origins = [
+    "https://sub.alitak.hu",  # Production frontend
+    "http://localhost:5173",   # Local development
+    "http://127.0.0.1:5173",   # Local development alternative
+]
+
 app.add_middleware(
     CORSMiddleware,
-    # Development:
-    # allow_origins=["*"],
-    # Production:
-    allow_origins=["https://sub.alitak.hu"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 # Include routers
