@@ -60,5 +60,5 @@ jobs:
             echo "DATABASE_URL=${{ vars.DATABASE_URL }}" >> .env
             echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env
 
-            # echo "--- restarting fastapi service ---"
-            # sudo systemctl restart subtitle-translator.service
+            echo "--- restarting fastapi service ---"
+            systemctl restart subtitle-translator.service
