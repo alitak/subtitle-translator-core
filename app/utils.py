@@ -22,7 +22,7 @@ def init_logging(logger_name: str = "") -> logging.Logger:
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    log_file_path = os.path.join(os.path.dirname(__file__), "storage", "logs", f"{logger_name}.log")
+    log_file_path = os.path.join(os.path.dirname(__file__), "..", "storage", "logs", f"{logger_name}.log")
 
     # Create file handler with rotation (e.g., 1MB per file, keep last 5 logs)
     file_handler = RotatingFileHandler(log_file_path, maxBytes=1_000_000, backupCount=5)
