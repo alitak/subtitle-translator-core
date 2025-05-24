@@ -53,11 +53,11 @@ jobs:
             .venv/bin/pip install .
 
             echo "--- writing .env ---"
-            cat > .env << EOL
-            BASE_URL=${{ vars.BASE_URL }}
-            DATABASE_URL=${{ vars.DATABASE_URL }}
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            EOL
+            cat <<EOL > .env
+BASE_URL=${{ vars.BASE_URL }}
+DATABASE_URL=${{ vars.DATABASE_URL }}
+OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+EOL
 
             # echo "--- restarting fastapi service ---"
             # sudo systemctl restart subtitle-translator.service
