@@ -49,7 +49,7 @@ def store(
         status=VideoStatus.PENDING
     )
     subtitles = []
-    video.languages.append("hu")
+    video.languages.insert(0, "hu")
     for lang in video.languages:
         subtitles.append(SubtitleModel(language=lang))
 
@@ -61,8 +61,8 @@ def store(
     
     background_tasks.add_task(
         VideoService(db).download_subtitles,
-        video=video_obj,
-        background_tasks=background_tasks
+        video_obj,
+        background_tasks
     )
     
     return video_obj
@@ -130,7 +130,8 @@ def translate_subtitles(
     
     background_tasks.add_task(
         TranslationService().translate_subtitle,
-        subtitle=subtitle,
+        subtitle_id=subtitle.id,
+        video_id=video.id,
         db=db,
         hu_subtitle_path=source_sub.path
     )

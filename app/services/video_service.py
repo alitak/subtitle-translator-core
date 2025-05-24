@@ -65,7 +65,8 @@ class VideoService:
                 if subtitle.language != "hu":
                     background_tasks.add_task(
                         TranslationService().translate_subtitle,
-                        subtitle=subtitle,
+                        subtitle_id=subtitle.id,
+                        video_id=video.id,
                         db=self.db,
                         hu_subtitle_path=subtitle_hu.path
                     )

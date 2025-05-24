@@ -14,11 +14,11 @@ class TranslationService:
         self.model = "gpt-4.1-mini"
     
 
-    def translate_subtitle(self, subtitle: SubtitleModel, db: Session, hu_subtitle_path: str) -> bool:
+    def translate_subtitle(self, subtitle_id: int, video_id: int, db: Session, hu_subtitle_path: str) -> bool:
         """Translate subtitle file to target language"""
-        video_id = hu_subtitle_path.split(".")[0]
+        subtitle = db.query(SubtitleModel).filter(SubtitleModel.id == subtitle_id).first()
         print(f"video id: {video_id}")
-        with open(f"{settings.SUBTITLES_DIR}/{subtitle.video_id}/{hu_subtitle_path}", 'r', encoding='utf-8') as f:
+        with open(f"{settings.SUBTITLES_DIR}/{video_id}/{hu_subtitle_path}", 'r', encoding='utf-8') as f:
             content = f.read()
         print("content read, start translation")
         try:
@@ -42,7 +42,7 @@ class TranslationService:
             translated_content = response.choices[0].message.content
             print("translation done, start writing")
             subtitle_path = f"{video_id}.{subtitle.language}.vtt"
-            target_path = Path(f"{settings.SUBTITLES_DIR}/{subtitle.video_id}/{subtitle_path}")
+            target_path = Path(f"{settings.SUBTITLES_DIR}/{video_id}/{subtitle_path}")
             print("writing translated subtitles")
             # Write translated subtitles
             with open(target_path, 'w', encoding='utf-8') as f:
