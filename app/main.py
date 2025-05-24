@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from app.utils import register_debug_exception_handler
+from app.utils import register_debug_exception_handler, init_logging
 from .api.v1.endpoints import videos
 from app.core.settings import settings
+
+logger = init_logging("main")
+logger.info("FastAPI application starting up")
 
 app = FastAPI(
     title="Subtitle Translator API",

@@ -10,12 +10,11 @@ from app.utils import init_logging
 
 
 class TranslationService:
-    logger = init_logging("translation_service")
 
     def __init__(self):
         self.client = openai.OpenAI(api_key=settings.OPENAI_API_KEY)
         self.model = "gpt-4.1-mini"
-        self.logger = self.logger
+        self.logger = init_logging("service.translation")
     
 
     def translate_subtitle(self, subtitle_id: int, video_id: int, db: Session, hu_subtitle_path: str) -> bool:

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 import os
+from app.utils import init_logging
 from app.db.base import get_db
 from app.schemas.resources.video_resource import VideoList, VideoResource
 from app.schemas.requests.video_request import VideoCreateRequest
@@ -11,6 +12,8 @@ from app.services.translation_service import TranslationService
 from app.core.settings import settings
 from app.utils import dd_http
 
+logger = init_logging("api.videos")
+
 router = APIRouter()
 
 
@@ -20,6 +23,7 @@ def index(
     limit: int = Query(10, ge=1, le=100),
     db: Session = Depends(get_db),
 ):
+    logger.info("Fetching video list from database")
     query = db.query(VideoModel)
     total = query.count()
     videos = query.order_by(VideoModel.created_at.desc()).offset(skip).limit(limit).all()
@@ -44,6 +48,7 @@ def store(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
 ):
+    logger.info(f"Storing new video with URL: {video.url}")
     video_obj = VideoModel(
         url=str(video.url),
         status=VideoStatus.PENDING
@@ -85,6 +90,7 @@ def destroy(
     video_id: str,
     db: Session = Depends(get_db)
 ):
+    logger.info(f"Deleting video with ID: {video_id}")
     video = db.query(VideoModel).filter(VideoModel.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
@@ -109,6 +115,7 @@ def translate_subtitles(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
+    logger.info(f"Request received to translate video {video_id} to {language}")
     video = db.query(VideoModel).filter(VideoModel.id == video_id).first()
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
@@ -137,5 +144,3 @@ def translate_subtitles(
     )
     
     return {"status": "translation_started"}
-
-

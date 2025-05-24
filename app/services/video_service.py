@@ -1,10 +1,13 @@
 import os
 import yt_dlp
+from app.utils import init_logging
 from sqlalchemy.orm import Session
 from ..models.video_model import VideoModel, VideoStatus
 from ..models.subtitle_model import SubtitleStatus
 from ..services.translation_service import TranslationService
 from fastapi import BackgroundTasks
+
+logger = init_logging("service.video")
 
 class VideoService:
     def __init__(self, db: Session):
@@ -25,6 +28,8 @@ class VideoService:
         if not video:
             return False
 
+        logger.info(f"Starting subtitle download for video {video.id}")
+
         video.status = VideoStatus.DOWNLOADING
         self.db.commit()
 
@@ -44,6 +49,7 @@ class VideoService:
                 'no_warnings': True           # Suppress warnings
             }
 
+            logger.info("Using yt_dlp options: %s", ydl_opts)
 
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(video.url, download=True)
@@ -58,8 +64,12 @@ class VideoService:
                         subtitle_hu.status = SubtitleStatus.TRANSLATED
                         self.db.add(subtitle_hu)
 
+            logger.info("Subtitles downloaded successfully, updating database")
+
             video.status = VideoStatus.DOWNLOADED
             self.db.commit()
+
+            logger.info("Starting background translation tasks")
 
             for subtitle in video.subtitles:
                 if subtitle.language != "hu":
