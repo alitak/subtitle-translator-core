@@ -46,8 +46,9 @@ jobs:
             git pull origin main
 
             echo "--- setting up virtualenv ---"
-            python3 -m venv .venv
+            python3 -m venv --without-pip .venv
             source .venv/bin/activate
+            curl https://bootstrap.pypa.io/get-pip.py | python
             .venv/bin/pip install --upgrade pip
             .venv/bin/pip install .
 
