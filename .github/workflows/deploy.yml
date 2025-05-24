@@ -1,4 +1,4 @@
-name: Deploy Subtitle Translator
+name: Deploy Subtitle Translator API
 
 on:
   push:
@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.12"
           cache: "pip"
 
       - name: Ensure pip cache exists
@@ -36,13 +36,13 @@ jobs:
             ssh-keyscan -H github.com >> ~/.ssh/known_hosts
 
             echo "--- checking repo ---"
-            if [ ! -d /home/subtitle_translator ]; then
+            if [ ! -d /home/subtitle_translator_api ]; then
               echo "Cloning repo..."
-              git clone git@github.com:alitak/subtitle-translator-core.git /home/subtitle_translator
+              git clone git@github.com:alitak/subtitle-translator-core.git /home/subtitle_translator_api
             fi
 
             echo "Repo ready. Pulling latest..."
-            cd /home/subtitle_translator
+            cd /home/subtitle_translator_api
             git pull origin main
 
             echo "--- installing dependencies ---"
@@ -51,16 +51,10 @@ jobs:
 
             echo "--- writing .env ---"
             cat > .env << EOL
-            BINANCE_API_KEY=${{ secrets.BINANCE_API_KEY }}
-            BINANCE_SECRET_KEY=${{ secrets.BINANCE_SECRET_KEY }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            REDIS_PORT=${{ secrets.REDIS_PORT }}
-            WALLET_ENDPOINT=${{ secrets.WALLET_ENDPOINT }}
+            BASE_URL=${{ vars.BASE_URL }}
+            DATABASE_URL=${{ vars.DATABASE_URL }}
+            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
             EOL
 
-            echo "--- creating logs dir ---"
-            mkdir -p logs
-
-            echo "--- restarting bot screen ---"
-            screen -S subtitle_translator -X quit || true
-            screen -dmS subtitle_translator python3 /home/subtitle_translator/main.py
+            # echo "--- restarting fastapi service ---"
+            # sudo systemctl restart subtitle-translator.service

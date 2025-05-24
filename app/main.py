@@ -22,9 +22,9 @@ def read_root():
 app.add_middleware(
     CORSMiddleware,
     # Development:
-    allow_origins=["*"],
+    # allow_origins=["*"],
     # Production:
-    # allow_origins=["https://sub.alitak.hu"],
+    allow_origins=["https://sub.alitak.hu"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -36,5 +36,3 @@ app.include_router(
     prefix="/api/v1/videos",
     tags=["videos"]
 )
-
-    # "openai==1.12.0",
