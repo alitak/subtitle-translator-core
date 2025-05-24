@@ -45,9 +45,11 @@ jobs:
             cd /home/subtitle_translator_api
             git pull origin main
 
-            echo "--- installing dependencies ---"
-            python3 -m pip install --upgrade pip
-            pip install .
+            echo "--- setting up virtualenv ---"
+            python3 -m venv .venv
+            source .venv/bin/activate
+            .venv/bin/pip install --upgrade pip
+            .venv/bin/pip install .
 
             echo "--- writing .env ---"
             cat > .env << EOL
