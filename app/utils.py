@@ -9,22 +9,23 @@ def init_logging(logger_name: str = "") -> logging.Logger:
     log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
     log_level = getattr(logging, log_level_str, logging.INFO)
 
-    logger = logging.getLogger()
+    logger = logging.getLogger(logger_name)
     logger.setLevel(log_level)
 
-    # Create formatter
+    if logger.hasHandlers():
+        return logger  # Ne duplikáljunk handlereket
+
     formatter = logging.Formatter(
         "%(asctime)s %(levelname)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    # Create console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
     log_file_path = os.path.join(os.path.dirname(__file__), "..", "storage", "logs", f"{logger_name}.log")
+    os.makedirs(os.path.dirname(log_file_path), exist_ok=True)
 
-    # Create file handler with rotation (e.g., 1MB per file, keep last 5 logs)
     file_handler = RotatingFileHandler(log_file_path, maxBytes=1_000_000, backupCount=5)
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
